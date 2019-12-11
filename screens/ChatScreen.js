@@ -6,8 +6,10 @@ import { StyleSheet,
           TouchableOpacity,
           Image} from 'react-native';
 import { width, height } from './constants/sizes';
-import MessageList from './components/MessageList'
-class App extends Component {
+import MessageList from '../components/MessageList'
+
+
+class ChatScreen extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -34,7 +36,7 @@ class App extends Component {
           })
         })
         .catch((error) => {
-          console.log(error);
+          console.error(error);
         })
     )
   }
@@ -54,16 +56,14 @@ class App extends Component {
       let id = (+new Date).toString();
     
       let messageData = this.state.DATA;
-      let messageLast = [{
+      let messageDataNew = messageData.concat({
         id: id,
         title: this.state.message
-      }];
-
-      let messageDataNew = messageLast.concat(messageData);
+      })
       this.setState({
         message: '',
         DATA: messageDataNew
-      });
+      })
     }
     
   }
@@ -74,19 +74,16 @@ class App extends Component {
       <View
         style={styles.container}
         >
-        <KeyboardAvoidingView 
-          style={styles.messageContainer} 
-          behavior='padding' 
-          keyboardVerticalOffset={height*0.1}>
-            <View style={styles.messageStyle}>
-              <MessageList 
-                loading={this.state.dataLoading}
-                data={this.state.DATA}
-              />
-            </View>
-        </KeyboardAvoidingView>
+        <View style={styles.messageContainer}>
+          <View style={styles.messageStyle}>
+            <MessageList 
+              loading={this.state.dataLoading}
+              data={this.state.DATA}
+            />
+          </View>
+        </View>
 
-        <KeyboardAvoidingView style={styles.footerKeyboard} behavior='position'>
+        <KeyboardAvoidingView style={styles.footerKeyboard} behavior='position' enabled>
           <View style={styles.footer}>
             <TextInput 
               style={styles.inputStyle}
@@ -161,4 +158,4 @@ const styles = StyleSheet.create({
   }
 })
 
-export default App;
+export default ChatScreen;
