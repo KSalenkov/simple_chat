@@ -19,7 +19,8 @@ class App extends Component {
 
   getDataMessage = () => {
     return(
-      fetch('https://raw.githubusercontent.com/KSalenkov/chat_test/master/dataMassage.json')
+      // fetch('http://raw.githubusercontent.com/KSalenkov/chat_test/master/dataMassage.json')
+      fetch('http://localhost:3000/')
         .then((response) => {
             if (!response.ok) {
               this.setState({dataLoading: false})
@@ -69,7 +70,7 @@ class App extends Component {
   }
    
   render() {
-    console.log(this.state.dataLoading)
+    
     return (
       <View
         style={styles.container}
@@ -139,9 +140,9 @@ const styles = StyleSheet.create({
   messageStyle: {
     flex: 1,
     backgroundColor: '#fff',
-    justifyContent: 'flex-end',
     padding: 10,
     borderRadius: 4,
+    justifyContent: 'center'
   },
   inputStyle: {
     width: width *0.8,

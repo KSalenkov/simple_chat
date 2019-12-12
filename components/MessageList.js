@@ -20,7 +20,9 @@ function MessageList(props) {
     
     if (!loading) {
         return(
-        <ProgressBarAndroid />
+        <ProgressBarAndroid
+          color={'#cccaca'}
+        />
         )
     } else {
         return(
