@@ -4,90 +4,177 @@ import { StyleSheet,
           TextInput,
           KeyboardAvoidingView,
           TouchableOpacity,
-          Image} from 'react-native';
+          Image,
+          AppState} from 'react-native';
 import { width, height } from './constants/sizes';
-import MessageList from './components/MessageList'
+import { idClient } from './constants/thisDevise';
+import MessageList from './components/MessageList';
+import RandomString from './components/RandomString';
+import { Notifications } from 'expo';
+
+
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
       message: '',
       DATA: [],
-      dataLoading: false
+      dataLoaded: false,
+      serverInput: '192.168.88.221',
+      server: '',
+      appState: AppState.currentState
     }
   }
 
-  getDataMessage = () => {
-    return(
-      // fetch('http://raw.githubusercontent.com/KSalenkov/chat_test/master/dataMassage.json')
-      fetch('http://localhost:3000/')
-        .then((response) => {
-            if (!response.ok) {
-              this.setState({dataLoading: false})
-            } else {
-              this.setState({dataLoading: true});
-              return(response.json())
-            }
-          })
-        .then((responseJson) => {
-          this.setState({
-            DATA: responseJson
-          })
-        })
-        .catch((error) => {
-          console.log(error);
-        })
-    )
+  componentDidMount() {
+    AppState.addEventListener('change', (nextAppState) => {
+      this.setState({appState: nextAppState})
+    });
+    const channel = {
+      name: 'Simple Chat',
+      sound: true
+    }
+    Notifications.createChannelAndroidAsync('simplechat', channel)
+  }
+  
+
+  componentWillUnmount() {
+    this.state.ws.close()
   }
 
-  componentDidMount() {
-    this.getDataMessage()
+  getDataMessage = async (server) => {
+
+    try {
+      const response = await fetch(`http://${server}:3000/dataMessage.json`);
+      
+      if (!response.ok) {
+        this.setState({dataLoaded: false})
+      } else {      
+        const responseJson = await response.json();
+        
+        this.setState({
+          dataLoaded: true,
+          DATA: responseJson
+        })
+      }  
+    } catch (error) {
+      console.log(error)
+    }
   }
-  
-  
+
+  _addServer = (text) => {
+    this.setState({serverInput: text});
+  }
+
+  _connectServer = () => {
+    const { serverInput, server, ws } = this.state;
+    if (serverInput) {
+      this.getDataMessage(serverInput);
+      this.setState({
+        serverInput: '',
+        server: serverInput
+      })
+      if (!ws) {
+        this.setState({
+          ws: new WebSocket(`ws://${serverInput}:3000`)
+        })
+      } else {
+        ws.close();
+        this.setState({
+          ws: new WebSocket(`ws://${serverInput}:3000`)
+        })
+      }
+    }
+
+  }
+
   _addMessage = (text) => {
     this.setState({message: text})
   }
 
   _sendMessage = () => {
-    
-    if(this.state.message) {
-      let id = (+new Date).toString();
-    
-      let messageData = this.state.DATA;
-      let messageLast = [{
-        id: id,
-        title: this.state.message
+    const { message } = this.state;
+    if(message) {
+      const time = new Date;
+      const id = (+time).toString()+'-'+RandomString(9)+'-'+RandomString(9);
+      
+      const messageLast = [{
+        id,
+        message,
+        time,
+        idClient
       }];
-
-      let messageDataNew = messageLast.concat(messageData);
+      this.state.ws.send(JSON.stringify(messageLast));
       this.setState({
-        message: '',
-        DATA: messageDataNew
+        message: ''
       });
     }
-    
   }
-   
+
+  _pushNotification = (data) => {
+    const notification = {
+      title: 'Новое сообщение',
+      body: data,
+      android: {
+        channelId: 'simplechat',
+        icon: './src/image/chat_icon.png'
+      }
+    }
+    
+    Notifications.presentLocalNotificationAsync(notification)
+  }
+
   render() {
     
+    if(this.state.ws) {
+      this.state.ws.onopen = () => {
+        this.setState({dataLoaded: true})
+      }
+      
+      this.state.ws.onmessage = (event) => {
+        this.setState({
+          DATA: [...JSON.parse(event.data), ...this.state.DATA]
+        });
+        const message = JSON.parse(event.data)[0];
+        if (message.idClient != idClient && this.state.appState != 'active') {
+          this._pushNotification(message.message);
+        }
+      }
+    }
+
     return (
-      <View
-        style={styles.container}
-        >
+      <View style={styles.container}>
+        
         <KeyboardAvoidingView 
           style={styles.messageContainer} 
           behavior='padding' 
-          keyboardVerticalOffset={height*0.1}>
+          keyboardVerticalOffset={height*0.1}
+        >
+            <View style={styles.header}>
+              <TextInput 
+                style={styles.inputStyle}
+                placeholder='Введите адрес сервера'
+                value={this.state.serverInput}
+                onChangeText={this._addServer}
+              />
+              <TouchableOpacity 
+                style={styles.btnStyle}
+                onPress={this._connectServer}>
+                  <Image
+                    style={{width: 35, height: 35}}
+                    source={require('./src/image/ok.png')}
+                  />
+              </TouchableOpacity>
+            </View>
             <View style={styles.messageStyle}>
               <MessageList 
-                loading={this.state.dataLoading}
+                loaded={this.state.dataLoaded}
                 data={this.state.DATA}
               />
             </View>
         </KeyboardAvoidingView>
 
-        <KeyboardAvoidingView style={styles.footerKeyboard} behavior='position'>
+        <KeyboardAvoidingView behavior='position'>
           <View style={styles.footer}>
             <TextInput 
               style={styles.inputStyle}
@@ -124,10 +211,6 @@ const styles = StyleSheet.create({
     paddingTop: height * 0.1,
     paddingBottom: 10,
   },
-  footerKeyboard: {
-    width: width,
-    height: height*0.1,
-  },
   footer: {
     width: width,
     height: height*0.1,
@@ -159,6 +242,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#e0dfdf',
     justifyContent: 'center',
     alignContent: 'center',
+    alignItems: 'center'
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10
   }
 })
 
