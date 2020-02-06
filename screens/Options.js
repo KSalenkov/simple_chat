@@ -177,11 +177,11 @@ class Options extends Component {
                 </View>
 
                 <View style={styles.block}>
-                    <Text style={styles.title}>Никнейм:</Text>
+                    <Text style={styles.title}>Никнейм: {this.props.nickName}</Text>
                     <View style={[styles.inputAndBtn, inputAndBtnOptions]}>
                         <TextInput 
                             style={[styles.input, inputOptions]}
-                            value={this.props.nickName}
+                            value={this.state.nickName}
                             onChangeText={this._inputNickName}
                         />
                         <TouchableOpacity 

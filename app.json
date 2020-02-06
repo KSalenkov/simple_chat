@@ -2,7 +2,7 @@
   "expo": {
    "name": "Simple chat",
    "icon": "./src/image/chat_icon2.png",
-   "version": "3.0.3",
+   "version": "3.0.4",
    "slug": "SC",
    "sdkVersion": "35.0.0",
    "orientation": "portrait",
