@@ -3,20 +3,23 @@ import { StyleSheet,
           View, 
           Text,
           FlatList,
-          ProgressBarAndroid} from 'react-native';
+          ProgressBarAndroid,
+          TouchableOpacity } from 'react-native';
 import { idClient } from '../constants/thisDevise'
 
 
-const Item = ({ text, date, idClientItem }) => {
+const Item = ({ 
+  nickName, 
+  text, 
+  date, 
+  idClientItem, 
+  itemData, 
+  press, 
+  edited,
+  itemColor,
+  itemMyColor
+}) => {
   
-  const addZero = (num) => {
-    if (num<10) {
-      return ('0'+num)
-    } else {
-      return num
-    }
-  }
-
   const time = (date) => {
     
     const time = new Date(date);
@@ -27,26 +30,66 @@ const Item = ({ text, date, idClientItem }) => {
     return (`${hours}:${minuts}`)
   }
 
-  const {item, itemMy, message, messageTime} = styles;
+  const TitleEdit = () => {
+    if (edited) {
+      return (
+        <Text>Изменено </Text>
+      )
+    } else {
+      return (
+        <Text></Text>
+      )
+    }
+  }
+
+  const { 
+    item, 
+    itemMy, 
+    nick, 
+    message, 
+    messageTime
+  } = styles;
+
+  
 
   return (
     
-    <View style={(idClientItem==idClient) ? itemMy : item}>
-      <Text style={message}>{text}</Text>
-      <Text style={messageTime}>{time(date)}</Text>
-    </View>
+    <TouchableOpacity
+      style={(idClientItem==idClient) ? [itemMy, itemMyColor] : [item, itemColor]}
+      activeOpacity={0.5}
+      onLongPress={() => {
+        if (itemData.idClient === idClient) {
+          press(itemData)
+        }
+      }}
+    >
+        <Text ><Text style={nick}>{nickName}:</Text> <Text style={message}>{text}</Text></Text>
+        <Text style={messageTime}><TitleEdit/>{time(date)}</Text>
+    </TouchableOpacity>
   );
 }
 
 function MessageList(props) {
+    
+    const {
+      loaded, 
+      data, 
+      server,
+      itemColor,
+      itemMyColor
+    } = props;
 
-    const {loaded, data} = props;
-
-    if (!loaded) {
+    if (!loaded && server) {
       return(
         <ProgressBarAndroid
           color={'#cccaca'}
         />
+      )
+    } else if (!server) {
+      return(
+        <View style={styles.notServerBox}>
+          <Text style={styles.textServer}>Нет подключения к серверу</Text>
+        </View>
       )
     }
 
@@ -56,9 +99,15 @@ function MessageList(props) {
         renderItem={({item}) => {
           return (
             <Item
+              nickName={item.nickName}
               text={item.message}
               date={item.time}
               idClientItem={item.idClient}
+              edited={item.edited}
+              itemData={item}
+              press={props.chooseMessage}
+              itemColor={itemColor}
+              itemMyColor={itemMyColor}
             />
           )
           
@@ -70,18 +119,21 @@ function MessageList(props) {
     
 }
 
+
 const styles = StyleSheet.create({
     item: {
-      backgroundColor: '#e8e8e8',
       padding: 5,
       marginVertical: 3,
       borderRadius: 3,
     },
     itemMy: {
-      backgroundColor: '#cccaca',
       padding: 5,
       marginVertical: 3,
       borderRadius: 3,
+    },
+    nick: {
+      fontWeight: 'bold',
+      textDecorationLine: 'underline'
     },
     message: {
       fontSize: 15,
@@ -89,7 +141,24 @@ const styles = StyleSheet.create({
     messageTime: {
       fontSize: 8,
       textAlign: 'right'
+    },
+    notServerBox: {
+      flex: 1,
+      justifyContent: 'flex-start',
+      textAlign: 'center'
+    },
+    textServer: {
+      textAlign: 'center',
+      opacity: 0.3
     }
   })
 
-  export default MessageList;
+  const addZero = (num) => {
+    if (num<10) {
+      return ('0'+num)
+    } else {
+      return num
+    }
+  }
+
+  export default MessageList

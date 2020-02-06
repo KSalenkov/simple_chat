@@ -2,12 +2,20 @@
   "expo": {
    "name": "Simple chat",
    "icon": "./src/image/chat_icon2.png",
-   "version": "1.0.0",
+   "version": "3.0.3",
    "slug": "SC",
    "sdkVersion": "35.0.0",
    "orientation": "portrait",
    "android": {
-     "package": "com.yourcompany.yourappname"
-   }
+     "package": "com.yourcompany.eskey"
+   },
+   "splash": { 
+      "image": "./src/image/startScreen.png" 
+    }, 
+    "notification": { 
+      "icon": "./src/image/chat_icon.png", 
+      "androidMode": "collapse", 
+      "androidCollapsedTitle": "Новые сообщения" 
+    }
   }
 }
